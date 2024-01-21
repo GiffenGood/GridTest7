@@ -1,0 +1,79 @@
+﻿@page "/GridList"
+
+@using GridTest.Client
+
+<style>
+    .grid {
+        height:432px;
+    }
+</style>
+
+<h3>SimpleList with Focus</h3>
+<DxGrid Data="@patients" 
+        @ref="grid"
+        KeyFieldName="Id"
+        ShowAllRows="true"
+        CssClass="grid"
+        FocusedRowEnabled="true"
+        FocusedRowChanged="SelectedDataItemChanged"
+        KeyboardNavigationEnabled="true">
+    <Columns>
+        <DxGridDataColumn Width="100" FieldName="@nameof(Patient.Id)"></DxGridDataColumn>
+        <DxGridDataColumn FieldName="@nameof(Patient.LastName)"></DxGridDataColumn>
+        <DxGridDataColumn FieldName="@nameof(Patient.FirstName)"></DxGridDataColumn>
+        <DxGridDataColumn FieldName="@nameof(Patient.DateOfBirth)"></DxGridDataColumn>
+    </Columns>
+</DxGrid>
+
+<div class="mt-2">Selected Patient: @((Selection as Patient)?.LastName)</div>
+<DxButton @onclick="DoClick" Text="Fetch"></DxButton>
+
+
+@code {
+    List<Patient> patients = new();
+    DxGrid? grid;
+    bool loaded;
+
+    Patient? Selection { get; set; }
+
+    public string Stuff { get; set; } = "Not Set";
+
+    async Task DoClick()
+    {
+        await FocusToPatient();
+    }
+    
+    private void SelectedDataItemChanged(GridFocusedRowChangedEventArgs obj)
+    {
+        if (!loaded) return;
+        var pat = obj.DataItem as Patient;
+        GridState.SelectedPatient = pat;
+        Console.WriteLine($"Selected Patient: {pat?.LastName}");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        patients = await Repo.GetPatients();
+        
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender && !loaded)
+        {
+            loaded = true;
+            //await FocusToPatient();
+        }
+    }
+
+    private async Task FocusToPatient()
+    {
+        if (GridState.SelectedPatient != null)
+        {
+            if (grid == null) return;
+            Console.WriteLine($"focusing to patient {GridState.SelectedPatient?.LastName ??"None"}");
+            await grid.SetFocusedDataItemAsync(GridState.SelectedPatient);
+        }
+    }
+
+}

@@ -1,0 +1,61 @@
+﻿@page "/"
+@using GridTest.Client
+
+<h3>Page with Selection</h3>
+<DxGrid Data="@patients" 
+        @ref="grid"
+        KeyFieldName="Id"
+        CssClass="grid"
+        SelectedDataItem="Selection"
+        SelectedDataItemChanged="SelectedDataItemChanged"
+        AllowSelectRowByClick="true"
+        KeyboardNavigationEnabled="true">
+    <Columns>
+        <DxGridDataColumn Width="100" FieldName="@nameof(Patient.Id)"></DxGridDataColumn>
+        <DxGridDataColumn FieldName="@nameof(Patient.LastName)"></DxGridDataColumn>
+        <DxGridDataColumn FieldName="@nameof(Patient.FirstName)"></DxGridDataColumn>
+        <DxGridDataColumn FieldName="@nameof(Patient.DateOfBirth)"></DxGridDataColumn>
+    </Columns>
+</DxGrid>
+
+<div class="mt-2">Selected Patient: @((Selection as Patient)?.LastName)</div>
+
+<div class="mt-2">
+    @if (grid != null)
+    {
+        foreach (var col in grid?.GetSortedColumns())
+        {
+            <div>@col.FieldName  @col.SortOrder</div>
+        }
+    }
+</div>
+
+
+@code {
+    List<Patient> patients = new();
+    DxGrid? grid;
+
+    object Selection { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        patients = await Repo.GetPatients();
+        if(GridState.SelectedPatient != null)
+        {
+            Selection = GridState.SelectedPatient;
+        }
+        else 
+            Selection = patients.FirstOrDefault();
+    }
+    
+    private void SelectedDataItemChanged(object obj)
+    {
+        var pat = obj as Patient;
+        Console.WriteLine($"Selected Patient: {pat?.LastName}");
+        GridState.SelectedPatient = pat;
+        Selection = pat;
+    }
+
+    
+
+}
