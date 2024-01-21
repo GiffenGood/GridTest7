@@ -1,4 +1,5 @@
-﻿<div id="sidebar" class="@(IsExpanded ? "expanded": "")">
+﻿@using GridTest.Client
+<div id="sidebar" class="@(IsExpanded ? "expanded": "")">
     <DxGridLayout CssClass="page-layout" RowSpacing="1.5rem">
         <Rows>
             <DxGridLayoutRow Areas="header menu-button" Height="auto"></DxGridLayoutRow>
@@ -36,6 +37,14 @@
             </DxGridLayoutItem>
             <DxGridLayoutItem Area="footer" CssClass="footer">
                 <Template>
+                    <div class="text-bg-info">
+                        @if (GridPageState.SelectedPatient != null)
+                        {
+                            <div>Selected Patient: @((GridPageState.SelectedPatient as Patient)?.LastName)</div>
+                        }
+                        <DxButton Text="Clear" SizeMode="SizeMode.Small" @onclick="() => GridPageState.SelectedPatient = null"></DxButton>
+                        <div>PageIndex: @GridPageState.PageIndex</div>
+                    </div>
                     <DxButton Text="Docs" RenderStyleMode="@ButtonRenderStyleMode.Text" CssClass="footer-button" RenderStyle="@ButtonRenderStyle.Light" NavigateUrl="https://docs.devexpress.com/Blazor/400725/blazor-components" IconCssClass="icon docs-icon"></DxButton>
                     <DxButton Text="Demos" RenderStyleMode="@ButtonRenderStyleMode.Text" CssClass="footer-button" RenderStyle="@ButtonRenderStyle.Light" NavigateUrl="https://demos.devexpress.com/blazor/" IconCssClass="icon demos-icon"></DxButton>
                 </Template>

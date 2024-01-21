@@ -1,4 +1,6 @@
-﻿namespace GridTest.Client;
+﻿using DevExpress.Blazor;
+
+namespace GridTest.Client;
 
 public static class GridState
 {

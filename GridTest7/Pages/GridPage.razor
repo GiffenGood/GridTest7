@@ -1,15 +1,21 @@
 ﻿@page "/"
 @using GridTest.Client
+@using System.Text.Json
 
 <h3>Page with Selection</h3>
 <DxGrid Data="@patients" 
         @ref="grid"
         KeyFieldName="Id"
         CssClass="grid"
-        SelectedDataItem="Selection"
+        SelectedDataItem="GridPageState.SelectedPatient"
         SelectedDataItemChanged="SelectedDataItemChanged"
         AllowSelectRowByClick="true"
-        KeyboardNavigationEnabled="true">
+        KeyboardNavigationEnabled="true"
+        LayoutAutoLoading="Grid_LayoutAutoLoading"
+        LayoutAutoSaving="Grid_LayoutAutoSaving"
+        PageIndex="@GridPageState.PageIndex"
+        PageIndexChanged="PageIndexChanged"
+        >
     <Columns>
         <DxGridDataColumn Width="100" FieldName="@nameof(Patient.Id)"></DxGridDataColumn>
         <DxGridDataColumn FieldName="@nameof(Patient.LastName)"></DxGridDataColumn>
@@ -18,7 +24,10 @@
     </Columns>
 </DxGrid>
 
-<div class="mt-2">Selected Patient: @((Selection as Patient)?.LastName)</div>
+<div class="mt-2">Selected Patient: @((GridPageState.SelectedPatient as Patient)?.LastName)</div>
+<div class="mt-2">PageIndex: @GridPageState.PageIndex</div>
+<DxButton Text="Delete" @onclick="Delete" Enabled="GridPageState.SelectedPatient != null"></DxButton>
+<div>@patients.Count()</div>
 
 <div class="mt-2">
     @if (grid != null)
@@ -35,27 +44,53 @@
     List<Patient> patients = new();
     DxGrid? grid;
 
-    object Selection { get; set; }
-
     protected override async Task OnInitializedAsync()
     {
         patients = await Repo.GetPatients();
-        if(GridState.SelectedPatient != null)
+        if(GridPageState.SelectedPatient != null && 
+           patients.Any(p=>p.Id == GridPageState.SelectedPatient?.Id))
         {
-            Selection = GridState.SelectedPatient;
+            GridPageState.SelectedPatient = GridPageState.SelectedPatient;
         }
-        else 
-            Selection = patients.FirstOrDefault();
+        else
+        {
+            GridPageState.SelectedPatient = patients.FirstOrDefault();
+            GridPageState.PageIndex = 0;
+        }
+    }
+
+    async Task Grid_LayoutAutoLoading(GridPersistentLayoutEventArgs e)
+    {
+        if (GridPageState.Layout == null) return;
+        e.Layout = GridPageState.Layout;
+        Console.WriteLine($"LayoutAutoLoading: {e.Layout}");
+    }
+
+    async Task Grid_LayoutAutoSaving(GridPersistentLayoutEventArgs e)
+    {
+        GridPageState.Layout = e.Layout;
+        Console.WriteLine($"LayoutAutoSaving: {e.Layout}");
     }
     
     private void SelectedDataItemChanged(object obj)
     {
         var pat = obj as Patient;
         Console.WriteLine($"Selected Patient: {pat?.LastName}");
-        GridState.SelectedPatient = pat;
-        Selection = pat;
+        GridPageState.SelectedPatient = pat;
     }
 
-    
+    private void PageIndexChanged(int page)
+    {
+        GridPageState.PageIndex = page;
+        GridPageState.SelectedPatient = null;
+        Console.WriteLine($"PageIndex: {page}");
+    }
+
+    private void Delete()
+    {
+        patients.Remove(GridPageState.SelectedPatient);
+        GridPageState.SelectedPatient = null;
+        StateHasChanged();
+    }
 
 }
