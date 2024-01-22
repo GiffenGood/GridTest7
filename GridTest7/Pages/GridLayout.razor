@@ -1,22 +1,24 @@
 ﻿@page "/"
 @using GridTest.Client
 
-<DxButton Text="Delete" @onclick="Delete" Enabled="GridPageState.SelectedPatient != null"></DxButton>
+<div class="mt-2">
 <DxButton Text="Add" @onclick="Add"></DxButton>
+<DxButton Text="Delete" @onclick="Delete" Enabled="GridLayoutState.SelectedPatient != null"></DxButton>
+</div>
 
-<h3>Page with Selection</h3>
+<h3>Page with Selection @GetSelectedName()</h3>
 <DxGrid Data="@patients" 
         @ref="grid"
         KeyFieldName="Id"
         CssClass="grid"
         SelectionMode="GridSelectionMode.Single"
-        SelectedDataItem="GridPageState.SelectedPatient"
+        SelectedDataItem="GridLayoutState.SelectedPatient"
         SelectedDataItemChanged="SelectedDataItemChanged"
         AllowSelectRowByClick="true"
         KeyboardNavigationEnabled="true"
         LayoutAutoLoading="Grid_LayoutAutoLoading"
         LayoutAutoSaving="Grid_LayoutAutoSaving"
-        >
+>
     <Columns>
         <DxGridDataColumn Width="100" FieldName="@nameof(Patient.Id)"></DxGridDataColumn>
         <DxGridDataColumn FieldName="@nameof(Patient.LastName)"></DxGridDataColumn>
@@ -25,20 +27,18 @@
     </Columns>
 </DxGrid>
 
-<div class="mt-2">Selected Patient: @((GridPageState.SelectedPatient as Patient)?.LastName)</div>
-<div class="mt-2">PageIndex: @GridPageState.PageIndex</div>
-<div>@patients.Count()</div>
-
-<div class="mt-2">
-    @if (grid != null)
-    {
-        foreach (var col in grid?.GetSortedColumns())
-        {
-            <div>@col.FieldName  @col.SortOrder</div>
-        }
-    }
+<div class="d-flex mt-2">
+    <div class="flex-grow-1">Patient Count @patients.Count()</div>
 </div>
 
+<h2 class="mt-2">What to test</h2>
+<ul>
+    <li>That selection is remembered</li>
+    <li>That Page is remembered</li>
+    <li>That sort order is remembered</li>
+    <li>That when adding a patient they are then selected - accounting for sort order</li>
+    <li>That when deleting a patient they are removed and grid updates.  No patient should be selected</li>
+</ul>
 
 @code {
     List<Patient> patients = new();
@@ -47,23 +47,23 @@
     protected override async Task OnInitializedAsync()
     {
         patients = await Repo.GetPatients();
-        if(GridPageState.SelectedPatient != null && 
-           patients.Any(p=>p.Id == GridPageState.SelectedPatient?.Id))
+        if(GridLayoutState.SelectedPatient != null && 
+           patients.Any(p=>p.Id == GridLayoutState.SelectedPatient?.Id))
         {
-            GridPageState.SelectedPatient = GridPageState.SelectedPatient;
+            GridLayoutState.SelectedPatient = GridLayoutState.SelectedPatient;
         }
     }
 
     async Task Grid_LayoutAutoLoading(GridPersistentLayoutEventArgs e)
     {
-        if (GridPageState.Layout == null) return;
-        e.Layout = GridPageState.Layout;
+        if (GridLayoutState.Layout == null) return;
+        e.Layout = GridLayoutState.Layout;
         Console.WriteLine($"LayoutAutoLoading: {e.Layout}");
     }
 
     async Task Grid_LayoutAutoSaving(GridPersistentLayoutEventArgs e)
     {
-        GridPageState.Layout = e.Layout;
+        GridLayoutState.Layout = e.Layout;
         Console.WriteLine($"LayoutAutoSaving: {e.Layout}");
     }
     
@@ -71,13 +71,13 @@
     {
         var pat = obj as Patient;
         Console.WriteLine($"Selected Patient: {pat?.LastName}");
-        GridPageState.SelectedPatient = pat;
+        GridLayoutState.SelectedPatient = pat;
     }
 
     private void Delete()
     {
-        patients.Remove(GridPageState.SelectedPatient);
-        GridPageState.SelectedPatient = null;
+        patients.Remove(GridLayoutState.SelectedPatient);
+        GridLayoutState.SelectedPatient = null;
         grid?.Reload();
     }
 
@@ -85,8 +85,13 @@
     {
         var pat = Repo.MakeRandomePatient();
         patients.Add(pat);
-        GridPageState.SelectedPatient = pat;
+        GridLayoutState.SelectedPatient = pat;
         grid?.Reload();
         grid?.MakeDataItemVisibleAsync(pat);
+    }
+
+    string GetSelectedName()
+    {
+        return $"({GridLayoutState.SelectedPatient?.LastName ?? "Nothing"})";
     }
 }
