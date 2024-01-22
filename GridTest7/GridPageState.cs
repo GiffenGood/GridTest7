@@ -8,3 +8,9 @@ public static class GridPageState
     public static int PageIndex { get; set; }
     public static GridPersistentLayout? Layout { get; set; }
 }
+
+public static class GridLayoutState
+{
+    public static Patient? SelectedPatient { get; set; }
+    public static GridPersistentLayout? Layout { get; set; }
+}

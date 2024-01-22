@@ -3,6 +3,7 @@
 public static class Repo
 {
     static readonly List<Patient> patients = new List<Patient>();
+    private static int lastId;
 
     static Repo()
     {
@@ -23,6 +24,7 @@ public static class Repo
             };
             patients.Add(patient);
         }
+        lastId = patients.Count;
 
         static DateTime RandomDateOfBirth(Random rnd)
         {
@@ -32,10 +34,26 @@ public static class Repo
 
             return new DateTime(year, month, day);
         }
+
     }
 
     public static  Task<List<Patient>> GetPatients()
     {
         return Task.FromResult(patients);
+    }
+
+    public static Patient MakeRandomePatient()
+    {
+        lastId++;
+        //get a random date of birth at least 19 years old.
+        var dob = DateTime.Now.AddYears(-19).AddDays(-new Random().Next(365 * 19));
+        var pat = new Patient
+        {
+            Id = lastId,
+            LastName = "New " + DateTime.Now.ToLongTimeString(),
+            FirstName = "Patient",
+            DateOfBirth = dob
+        };
+        return pat;
     }
 }

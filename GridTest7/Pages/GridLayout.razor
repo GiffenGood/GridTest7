@@ -1,20 +1,21 @@
-﻿@page "/GridPage"
+﻿@page "/"
 @using GridTest.Client
-@using System.Text.Json
+
+<DxButton Text="Delete" @onclick="Delete" Enabled="GridPageState.SelectedPatient != null"></DxButton>
+<DxButton Text="Add" @onclick="Add"></DxButton>
 
 <h3>Page with Selection</h3>
 <DxGrid Data="@patients" 
         @ref="grid"
         KeyFieldName="Id"
         CssClass="grid"
+        SelectionMode="GridSelectionMode.Single"
         SelectedDataItem="GridPageState.SelectedPatient"
         SelectedDataItemChanged="SelectedDataItemChanged"
         AllowSelectRowByClick="true"
         KeyboardNavigationEnabled="true"
         LayoutAutoLoading="Grid_LayoutAutoLoading"
         LayoutAutoSaving="Grid_LayoutAutoSaving"
-        PageIndex="@GridPageState.PageIndex"
-        PageIndexChanged="PageIndexChanged"
         >
     <Columns>
         <DxGridDataColumn Width="100" FieldName="@nameof(Patient.Id)"></DxGridDataColumn>
@@ -26,7 +27,6 @@
 
 <div class="mt-2">Selected Patient: @((GridPageState.SelectedPatient as Patient)?.LastName)</div>
 <div class="mt-2">PageIndex: @GridPageState.PageIndex</div>
-<DxButton Text="Delete" @onclick="Delete" Enabled="GridPageState.SelectedPatient != null"></DxButton>
 <div>@patients.Count()</div>
 
 <div class="mt-2">
@@ -52,11 +52,6 @@
         {
             GridPageState.SelectedPatient = GridPageState.SelectedPatient;
         }
-        else
-        {
-            GridPageState.SelectedPatient = patients.FirstOrDefault();
-            GridPageState.PageIndex = 0;
-        }
     }
 
     async Task Grid_LayoutAutoLoading(GridPersistentLayoutEventArgs e)
@@ -79,18 +74,19 @@
         GridPageState.SelectedPatient = pat;
     }
 
-    private void PageIndexChanged(int page)
-    {
-        GridPageState.PageIndex = page;
-        GridPageState.SelectedPatient = null;
-        Console.WriteLine($"PageIndex: {page}");
-    }
-
     private void Delete()
     {
         patients.Remove(GridPageState.SelectedPatient);
         GridPageState.SelectedPatient = null;
-        StateHasChanged();
+        grid?.Reload();
     }
 
+    private void Add()
+    {
+        var pat = Repo.MakeRandomePatient();
+        patients.Add(pat);
+        GridPageState.SelectedPatient = pat;
+        grid?.Reload();
+        grid?.MakeDataItemVisibleAsync(pat);
+    }
 }
